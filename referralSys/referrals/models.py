@@ -1,24 +1,17 @@
 from django.db import models
-
-from django.db import models
 from django.conf import settings
 
 User = settings.AUTH_USER_MODEL
 
-"""
-This model stores referral information.
-One referral code belongs to one user.
-Another user may use that referral code.
-"""
-
 class Referral(models.Model):
-    referral_code = models.CharField(max_length=20, unique=True)
+    referral_code = models.CharField(max_length=20, unique=True, db_index=True)  # Added db_index=True
 
     # User who owns the referral code
     referred_by = models.ForeignKey(
         User,
         related_name='referrals',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        db_index=True  
     )
 
     referred_at = models.DateTimeField(auto_now_add=True)
@@ -29,10 +22,16 @@ class Referral(models.Model):
         null=True,
         blank=True,
         related_name='used_referrals',
-        on_delete=models.SET_NULL
+        on_delete=models.SET_NULL,
+        db_index=True  
     )
 
     referral_used_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:  
+        indexes = [
+            models.Index(fields=['referred_by', 'referral_code_used']),
+        ]
 
     def __str__(self):
         return f"{self.referral_code} by {self.referred_by}"
