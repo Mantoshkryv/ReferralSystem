@@ -4,12 +4,7 @@ from referrals.models import Referral
 
 User = settings.AUTH_USER_MODEL
 
-"""
-RewardConfig:
-Stores configurable reward values.
-We never hardcode reward amounts in code.
-"""
-
+# stores reward settings 
 class RewardConfig(models.Model):
     reward_type = models.CharField(
         max_length=20,
@@ -33,19 +28,16 @@ class RewardConfig(models.Model):
         return f"{self.reward_type} - {self.reward_value} {self.reward_unit}"
 
 
-"""
-RewardLedger:
-Stores reward transactions for users.
-"""
-
+# tracks all reward transactions
 class RewardLedger(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_index=True)  
     referral = models.ForeignKey(Referral, on_delete=models.CASCADE)
 
     reward_type = models.CharField(max_length=20)
     reward_value = models.IntegerField()
     reward_unit = models.CharField(max_length=10)
 
+    # status can be pending, credited or revoked
     status = models.CharField(
         max_length=10,
         choices=[
