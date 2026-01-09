@@ -1,22 +1,19 @@
-# Referral System API
+# Referral System Backend
 
-Backend API for user referrals and rewards. Built with Django + DRF.
-
-## What it does
-
-Users can generate referral codes, share them with friends. When someone signs up using a referral code, the referrer gets reward points. There's also analytics to see how many people used your code.
+Backend API for referral system. Users can generate codes, apply them and get rewards.
 
 ## Setup
 
-You need Python 3.10+
+Requirements:
+- Python 3.10+
+- Django, DRF
 
 ```bash
-git clone <repo-url>
+git clone <repo>
 cd referralsys
 
 python -m venv venv
-venv\Scripts\activate  # windows
-source venv/bin/activate  # mac/linux
+venv\Scripts\activate
 
 pip install django djangorestframework djangorestframework-simplejwt
 ```
@@ -24,14 +21,10 @@ pip install django djangorestframework djangorestframework-simplejwt
 Run migrations:
 ```bash
 python manage.py migrate
-```
-
-Create admin user:
-```bash
 python manage.py createsuperuser
 ```
 
-**Important:** Add reward config before testing. Open shell and run:
+**Important** - need to add reward config in shell:
 ```bash
 python manage.py shell
 ```
@@ -41,152 +34,142 @@ RewardConfig.objects.create(reward_type='SIGNUP', reward_value=100, reward_unit=
 exit()
 ```
 
-Start server:
+Start:
 ```bash
 python manage.py runserver
 ```
 
 ## APIs
 
-Base URL: `http://127.0.0.1:8000/api`
+Base url: `http://127.0.0.1:8000/api`
 
-### Auth
+Need to add token in header for most APIs: `Authorization: Bearer <token>`
+
+### Register/Login
 
 Register:
 ```
 POST /api/users/register/
-{"username": "test", "password": "pass123"}
+{"username": "test", "password": "test123"}
 ```
 
-Login (get JWT token):
+Login:
 ```
 POST /api/users/login/
-{"username": "test", "password": "pass123"}
+{"username": "test", "password": "test123"}
 
-Returns: {"access": "token...", "refresh": "token..."}
+returns: {"access": "token...", "refresh": "..."}
 ```
 
-Use token in headers: `Authorization: Bearer <token>`
+### Referral stuff
 
-### Referrals
-
-Generate your code:
+Generate code:
 ```
 POST /api/referral/generate/
-Returns: {"referral_code": "SVH-A1B2C3"}
+returns: {"referral_code": "SVH-ABCD12"}
 ```
 
-Apply someone's code:
+Apply code:
 ```
 POST /api/referral/apply/
-{"referral_code": "SVH-A1B2C3"}
+{"referral_code": "SVH-ABCD12"}
 ```
 
-Analytics:
+Get summary:
 ```
 GET /api/referral/analytics/summary/
+```
+
+List:
+```
 GET /api/referral/analytics/list/
+```
+
+Timeline:
+```
 GET /api/referral/analytics/timeline/
 ```
 
 ### Rewards
 
-Check your rewards:
+Check rewards:
 ```
 GET /api/rewards/summary/
 GET /api/rewards/history/
 ```
 
-Admin credit reward:
+Admin credit:
 ```
 POST /api/rewards/admin/credit/<id>/
-(admin only)
 ```
 
 ## How it works
 
-When user B applies user A's referral code:
-1. Referral table gets updated with user B's info
-2. A PENDING reward is created for user A
-3. Admin can later credit the reward to make it active
+When user applies someone's referral code, system creates a PENDING reward for the referrer. Admin can credit it later.
 
-Reward amounts come from RewardConfig table, not hardcoded.
+Rewards are stored in RewardLedger table. Values come from RewardConfig.
 
 ## Database
 
-- **User**: Django's built-in user model
-- **Referral**: stores codes and tracks who used them
-- **RewardConfig**: defines reward amounts (configurable)
-- **RewardLedger**: tracks all reward transactions
-
-Foreign keys link everything together.
-
-## Testing
-
-Quick test flow:
-
-1. Register user1, login, generate referral code
-2. Register user2, login, apply user1's code
-3. Check user1's rewards - should see PENDING reward
-4. Admin can credit it
-
-Example with curl:
-```bash
-# Register
-curl -X POST http://127.0.0.1:8000/api/users/register/ -H "Content-Type: application/json" -d '{"username":"john","password":"test123"}'
-
-# Login
-curl -X POST http://127.0.0.1:8000/api/users/login/ -H "Content-Type: application/json" -d '{"username":"john","password":"test123"}'
-
-# Generate code (add token from login)
-curl -X POST http://127.0.0.1:8000/api/referral/generate/ -H "Authorization: Bearer <token>"
-```
-
-## Notes
-
-- Referral codes format: SVH-XXXXXX (6 random chars)
-- User can only apply one referral code
-- Can't use your own code
-- Generating code multiple times returns same code
-- SQLite for local dev, can switch to PostgreSQL
-- JWT tokens expire in 5 min
+Used 4 tables:
+- User (django default)
+- Referral (codes and tracking)
+- RewardConfig (reward settings)
+- RewardLedger (reward records)
 
 ## Structure
 
 ```
-referralsys/
-├── users/       - auth stuff
-├── referrals/   - referral logic
-├── rewards/     - reward system
-└── referral_system/  - settings
+users/      -> auth
+referrals/  -> referral logic
+rewards/    -> rewards
 ```
 
-Kept it simple with 3 apps instead of putting everything in one place.
+Separated into 3 apps for clean code.
 
-## Issues I ran into
+## Validations
 
-Had migration issues initially because of custom user model. Fixed by deleting db and migrations, then recreating in correct order (users first, then referrals, then rewards).
+- cant use own code
+- cant apply referral twice
+- code must be valid
+- admin only for credit API
 
-Make sure AUTH_USER_MODEL is set before first migration.
+## Testing
+
+1. Register user1, login, generate code
+2. Register user2, apply user1's code
+3. Check user1 rewards - should show pending
+
+curl example:
+```bash
+curl -X POST http://127.0.0.1:8000/api/users/register/ -H "Content-Type: application/json" -d '{"username":"test","password":"test123"}'
+```
+
+Can also test in Postman.
+
+## Issues I faced
+
+Migration problems - had to delete db.sqlite3 and migrations folder multiple times. Make sure to:
+1. Set AUTH_USER_MODEL in settings
+2. Run makemigrations users first
+3. Then referrals, then rewards
+4. Then migrate
+
+Also initially added referral_code in User model which caused circular dependency. Had to remove it.
+
+## Notes
+
+- Referral codes format: SVH-XXXXXX (6 chars)
+- get_or_create used for idempotent code generation
+- Analytics calculated dynamically
+- Using SQLite for now, can switch to postgres later
 
 ## Production
 
-For production you'd want to:
-- Use PostgreSQL instead of SQLite
+Would need to:
+- Use PostgreSQL
 - Set DEBUG=False
-- Use environment variables for secrets
-- Deploy with gunicorn or similar
-- Add CORS if there's a frontend
+- Environment variables for secrets
+- gunicorn for deployment
 
-## Validation
-
-- Self-referral blocked
-- Duplicate referral blocked  
-- Proper error messages
-- Admin endpoints check permissions
-
-Analytics are calculated on-the-fly, not stored.
-
----
-
-That's pretty much it. Check the code for implementation details.
+Thats it. Check code for more details.
