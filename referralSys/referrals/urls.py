@@ -4,7 +4,8 @@ from .views import (
     ApplyReferralCodeView,
     ReferralSummaryView,
     ReferralListView,
-    ReferralTimelineView
+    ReferralTimelineView,
+    TopReferrersView  # ADD THIS
 )
 
 urlpatterns = [
@@ -13,4 +14,5 @@ urlpatterns = [
     path('analytics/summary/', ReferralSummaryView.as_view()),
     path('analytics/list/', ReferralListView.as_view()),
     path('analytics/timeline/', ReferralTimelineView.as_view()),
+    path('admin/top/', TopReferrersView.as_view()),  # ADD THIS
 ]
