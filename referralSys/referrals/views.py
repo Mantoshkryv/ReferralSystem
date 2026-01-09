@@ -1,5 +1,3 @@
-# referrals/views.py
-
 import random
 import string
 
@@ -208,5 +206,26 @@ class ReferralTimelineView(APIView):
         )
 
         return Response(timeline)
+# -------------------------------------------------
+# Admin: Top Referrers API
+# -------------------------------------------------
+class TopReferrersView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        """
+        Returns top referrers by successful referral count.
+        Admin only endpoint.
+        """
+        
+        top_referrers = (
+            Referral.objects
+            .filter(referral_code_used__isnull=False)
+            .values('referred_by')
+            .annotate(successful_referrals=Count('id'))
+            .order_by('-successful_referrals')
+        )
+        
+        return Response(top_referrers)
 
 
