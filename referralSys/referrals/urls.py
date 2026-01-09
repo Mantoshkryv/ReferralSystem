@@ -5,7 +5,7 @@ from .views import (
     ReferralSummaryView,
     ReferralListView,
     ReferralTimelineView,
-    TopReferrersView  # ADD THIS
+    TopReferrersView 
 )
 
 urlpatterns = [
@@ -16,3 +16,4 @@ urlpatterns = [
     path('analytics/timeline/', ReferralTimelineView.as_view()),
     path('admin/top/', TopReferrersView.as_view()),  # ADD THIS
 ]
+
