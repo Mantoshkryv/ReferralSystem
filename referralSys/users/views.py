@@ -4,8 +4,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .serializers import RegisterSerializer
+import logging
+auth_logger = logging.getLogger("auth")
+error_logger = logging.getLogger("error")
 
+from .serializers import RegisterSerializer
 
 class RegisterView(APIView):
 
