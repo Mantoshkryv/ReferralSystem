@@ -12,6 +12,11 @@ from rest_framework import status
 from .models import Referral
 from .serializers import ReferralSerializer
 from rewards.models import RewardConfig, RewardLedger
+import logging
+referral_logger = logging.getLogger("referral")
+kpi_logger = logging.getLogger("kpi")
+admin_logger = logging.getLogger("admin")
+error_logger = logging.getLogger("error")
 
 
 # -------------------------------------------------
