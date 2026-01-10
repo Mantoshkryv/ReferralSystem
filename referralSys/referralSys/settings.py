@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'referrals',
     'rewards',
+    'rest_framework.authtoken',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -128,4 +130,84 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+}
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        "auth_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "auth.log",
+            "formatter": "verbose",
+        },
+        "referral_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "referral.log",
+            "formatter": "verbose",
+        },
+        "kpi_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "kpi.log",
+            "formatter": "verbose",
+        },
+        "admin_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "admin.log",
+            "formatter": "verbose",
+        },
+        "error_file": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "error.log",
+            "formatter": "verbose",
+        },
+    },
+
+    "loggers": {
+        "auth": {
+            "handlers": ["auth_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "referral": {
+            "handlers": ["referral_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "kpi": {
+            "handlers": ["kpi_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "admin": {
+            "handlers": ["admin_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "error": {
+            "handlers": ["error_file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
 }
